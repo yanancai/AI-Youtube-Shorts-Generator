@@ -1,6 +1,22 @@
 # AI Youtube Shorts Generator
 
-AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. The tool supports both YouTube URLs and local video files (with relative/absolute path support). This tool is currently in version 0.1 and might have some bugs.
+AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. The tool supports both YouTube URLs and local video files (with relative/absolute path support).
+
+## New Features (v0.3)
+
+- **Individual Clip Generation**: Creates separate video files for each engaging segment
+- **Descriptive Titles**: AI generates catchy titles for each clip suitable for social media
+- **Context Preservation**: Each clip maintains its original context and makes sense standalone
+- **Flexible Quantity**: Variable number of clips based on actual content quality (not forced 3-5)
+- **Duration Validation**: Each clip limited to under 60 seconds for optimal engagement
+- **Smart File Naming**: Clips saved with descriptive filenames based on AI-generated titles
+- **Clips Summary**: Automatic generation of summary file listing all created clips
+- **Transcription Debugging**: Saves Whisper transcriptions to `outputs/transcription/` for GPT performance analysis
+- **Multiple Formats**: Transcriptions saved as text (for GPT), JSON (structured), and SRT (subtitles)
+- **Customizable Prompts**: GPT prompts stored in external `prompt.ninja` file for easy customization
+- **Optional Cropping**: Face detection and vertical cropping can be applied optionally
+
+This tool is currently in version 0.3 and might have some bugs.
 
 If you wish to add shorts generation into your application, here is an api to create shorts from long form videos :- https://docs.vadoo.tv/docs/guide/create-ai-clips
 
@@ -16,12 +32,16 @@ If you wish to add shorts generation into your application, here is an api to cr
 
 ## Features
 
+## Features
+
 - **Video Input**: Supports both YouTube URLs and local video files (with relative/absolute path support).
 - **Video Download**: Given a YouTube URL, the tool downloads the video.
 - **Transcription**: Uses Whisper to transcribe the video.
-- **Highlight Extraction**: Utilizes OpenAI's GPT-4 to identify the most engaging parts of the video.
-- **Speaker Detection**: Detects speakers in the video.
-- **Vertical Cropping**: Crops the highlighted sections vertically, making them perfect for shorts.
+- **Individual Clip Generation**: Utilizes OpenAI's GPT-4 to identify engaging parts and create separate clips with titles.
+- **Smart Titling**: AI generates descriptive, catchy titles for each clip.
+- **Context Preservation**: Each clip maintains complete context and stands alone.
+- **Optional Face Detection**: Applies speaker detection and vertical cropping when requested.
+- **Clips Summary**: Generates summary files with details about all created clips.
 
 ## Installation
 
@@ -85,27 +105,124 @@ AZURE_OPENAI_DEPLOYMENT=your_deployment_name
 
 2. Run the main script with one of the following options:
 
-   **Option 1: Interactive Mode**
+   **Option 1: Interactive Mode (Individual Clips by default)**
 
    ```bash
    python main.py
    ```
 
-   You'll be prompted to enter either a YouTube URL or local video file path.
+   You'll be prompted to enter either a YouTube URL or local video file path, and choose between individual clips or single-segment mode.
 
-   **Option 2: Command Line with YouTube URL**
+   **Option 2: Command Line with YouTube URL (Individual Clips)**
 
    ```bash
    python main.py "https://youtube.com/watch?v=VIDEO_ID"
    ```
 
-   **Option 3: Command Line with Local Video File**
+   **Option 3: Command Line with Local Video File (Individual Clips)**
 
    ```bash
    python main.py "path/to/your/video.mp4"
    ```
 
+   **Option 4: Single-Segment Mode (Legacy)**
+
+   ```bash
+   python main.py "https://youtube.com/watch?v=VIDEO_ID" --single-segment
+   ```
+
+   **Option 5: With Face Detection and Vertical Cropping**
+
+   ```bash
+   python main.py "path/to/video.mp4" --process-face-crop
+   ```
+
    The tool automatically detects whether your input is a YouTube URL or a local file path. For local files, both relative and absolute paths are supported and will be converted to absolute paths automatically.
+
+## Command Line Options
+
+- `--single-segment`: Use the legacy single-segment mode instead of individual clips
+- `--process-face-crop`: Apply face detection and vertical cropping to generated clips
+
+## Individual Clips Mode vs Single-Segment Mode
+
+### Individual Clips Mode (Default)
+
+- Creates separate video files for each engaging segment
+- Each clip has a descriptive title and filename
+- Preserves original context in each clip
+- Variable number of clips based on content quality
+- Each clip under 60 seconds
+- Better for creating multiple focused shorts from one video
+
+### Single-Segment Mode (Legacy)
+
+- Extracts one continuous segment from the video
+- Preserves original video sequence
+- Simpler processing with faster execution
+- Good for videos with one clear highlight
+
+## Command Line Options
+
+- `--single-segment`: Use the legacy single-segment mode instead of multi-clip
+- `--apply-cropping`: Apply face detection and vertical cropping to the generated clips
+
+## Multi-Clip Mode vs Single-Segment Mode
+
+### Multi-Clip Mode (Default)
+
+- Extracts multiple engaging parts as separate video files
+- Each clip gets an AI-generated title and descriptive filename
+- Preserves original context for each segment
+- Variable number of clips based on content quality
+- Each clip under 60 seconds for optimal engagement
+- Perfect for creating multiple shorts from one long video
+
+### Single-Segment Mode (Legacy)
+
+- Extracts one continuous segment from the video
+- Preserves original video sequence
+- Simpler processing with faster execution
+- Good for videos with one clear highlight
+
+## Customizing the AI Prompt
+
+The AI prompt used to identify engaging segments is stored in `prompt.ninja` file in the project root. **This file is required** - the tool will exit with an error if it's not found.
+
+**Creating your prompt file:**
+
+- Copy an example: `cp prompt_examples/educational.ninja prompt.ninja`
+- Or create your own custom prompt
+
+**Example customizations:**
+
+- Change the focus (educational vs entertainment vs news)
+- Modify title requirements (length, style)
+- Adjust selection criteria for your content type
+- Change the priority ranking system
+
+After editing `prompt.ninja`, the changes will be automatically used in the next run.
+
+## Debugging and Analysis
+
+### Transcription Files
+
+The tool automatically saves Whisper transcriptions to `outputs/transcription/` folder for debugging and analysis:
+
+- **`transcript_YYYYMMDD_HHMMSS.txt`**: Human-readable format showing exactly what gets sent to GPT
+- **`transcript_YYYYMMDD_HHMMSS.json`**: Structured data with timestamps and segment durations
+- **`transcript_YYYYMMDD_HHMMSS.srt`**: Subtitle format for viewing with video players
+
+These files help you:
+
+- Debug GPT performance and prompt effectiveness
+- Analyze transcript quality and accuracy
+- Review what content the AI is working with
+- Fine-tune prompts based on actual transcription data
+
+### Clips Summary
+
+Each run generates `outputs/clips_summary.txt` with details about all generated clips including success/failure status, durations, and descriptions.
 
 ## Contributing
 
@@ -117,7 +234,48 @@ This project is licensed under the MIT License.
 
 ## Disclaimer
 
-This is a v0.1 release and might have some bugs. Please report any issues on the [GitHub Repository](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator).
+This is a v0.2 release and might have some bugs. Please report any issues on the [GitHub Repository](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator).
+
+## Changelog
+
+### v0.3
+
+- **Major Change**: Switched from merged clips to individual clip generation
+- Each engaging segment now creates a separate video file
+- AI generates descriptive titles for each clip
+- Smart filename generation based on clip titles
+- Flexible number of clips based on content quality (no forced quantity)
+- Each clip limited to under 60 seconds
+- Added clips summary generation
+- Made vertical cropping optional (--apply-cropping flag)
+- Improved context preservation for each clip
+
+## Changelog
+
+### v0.3
+
+- **Breaking Change**: Switched from merged multi-segment videos to individual clip generation
+- Added AI-generated descriptive titles for each clip
+- Implemented smart file naming based on clip titles
+- Added context preservation - each clip stands alone
+- Made face detection and vertical cropping optional
+- Added clips summary generation
+- Improved duration validation (clips under 60s)
+- Enhanced prompt to focus on standalone content quality
+
+### v0.2
+
+- Added multi-segment processing (3-5 clips per short) - **Deprecated in v0.3**
+- Implemented smart transitions between segments - **Deprecated in v0.3**
+- Added flow optimization for better narrative structure - **Deprecated in v0.3**
+- Introduced priority-based segment selection
+- Added command-line options for mode selection and duration control
+- Externalized GPT prompts to `prompt.ninja` file for easy customization
+- Maintained backward compatibility with single-segment mode
+
+### v0.1
+
+- Initial release with single-segment processing
 
 ### Other useful Video AI Projects
 

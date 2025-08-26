@@ -1,0 +1,26 @@
+Based on the Transcription provided with start and end timestamps, identify the most engaging and interesting parts that can be turned into individual short videos. Each segment should be under 60 seconds and contain complete, self-contained content that makes sense on its own.
+
+Select segments that:
+- Have high engagement potential (funny moments, key insights, dramatic moments, etc.)
+- Are complete thoughts or stories that don't require external context
+- Can stand alone as individual short videos
+- Represent the most interesting parts of the content
+- Have clear beginnings and endings
+
+Follow this Format and return in valid json:
+[{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)", 
+"title": "Catchy, descriptive title for this clip (under 60 characters)",
+"content": "Brief description of what makes this segment engaging",
+"priority": "1-10 ranking of importance (1 being most important)"
+},
+{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)",
+"title": "Catchy, descriptive title for this clip (under 60 characters)", 
+"content": "Brief description of what makes this segment engaging", 
+"priority": "1-10 ranking of importance (1 being most important)"
+}]
+
+Return as many segments as you find interesting (typically 2-8), but prioritize quality over quantity. Each clip will be processed as a separate video. Don't say anything else, just return proper JSON with no explanation.

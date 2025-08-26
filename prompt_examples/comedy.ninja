@@ -1,0 +1,42 @@
+# Example Customized Prompt for Entertainment/Comedy Content
+
+Based on the Transcription user provides with start and end timestamps, identify the most entertaining and funny parts that would work well as individual comedy short videos. Each segment should be under 60 seconds and contain a complete comedic moment that makes sense on its own.
+
+Select segments that:
+- Are genuinely funny or entertaining
+- Contain complete jokes or comedic moments
+- Include punchlines and comedic timing
+- Have unexpected or surprising elements
+- Work well as standalone comedy clips
+
+Follow this Format and return in valid json:
+# Example Customized Prompt for Entertainment/Comedy Content
+
+Based on the Transcription provided with start and end timestamps, identify the most entertaining and funny parts that can be turned into individual comedy short videos. Each segment should be under 60 seconds and contain complete, self-contained comedic moments.
+
+Select segments that:
+- Are genuinely funny or entertaining
+- Have complete jokes, stories, or comedic moments
+- Include punchlines and setup within the same clip
+- Have good comedic timing and natural endings
+- Work as standalone funny content
+
+Follow this Format and return in valid json:
+[{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)", 
+"title": "Funny title for this clip (under 60 characters)",
+"content": "Brief description of why this moment is funny",
+"priority": "1-10 ranking of comedic value (1 being funniest)"
+},
+{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)",
+"title": "Funny title for this clip (under 60 characters)", 
+"content": "Brief description of why this moment is funny", 
+"priority": "1-10 ranking of comedic value (1 being funniest)"
+}]
+
+Return as many segments as you find genuinely funny. Prioritize complete comedic moments that don't need external context. Don't say anything else, just return proper JSON with no explanation.
+
+Return only segments that are genuinely funny. Each clip will be a separate comedy video. Prioritize humor and entertainment value. Don't say anything else, just return proper JSON with no explanation.

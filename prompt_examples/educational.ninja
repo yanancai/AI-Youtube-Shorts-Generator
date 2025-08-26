@@ -1,0 +1,28 @@
+# Example Customized Prompt for Educational Content
+
+Based on the Transcription provided with start and end timestamps, identify the most educational and insightful parts that can be turned into individual educational short videos. Each segment should be under 60 seconds and contain complete, self-contained educational content.
+
+Select segments that:
+- Contain key learning moments or insights
+- Have clear explanations of important concepts
+- Include practical examples or demonstrations
+- Are easy to understand for a general audience
+- Provide complete educational value on their own
+
+Follow this Format and return in valid json:
+[{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)", 
+"title": "Educational title for this clip (under 60 characters)",
+"content": "Brief description of the educational value",
+"priority": "1-10 ranking of educational importance (1 being most important)"
+},
+{
+"start": "Start time of the clip (in seconds)",
+"end": "End time of the clip (in seconds)",
+"title": "Educational title for this clip (under 60 characters)", 
+"content": "Brief description of the educational value", 
+"priority": "1-10 ranking of educational importance (1 being most important)"
+}]
+
+Return as many segments as you find educationally valuable. Focus on educational completeness - each clip should teach something specific. Don't say anything else, just return proper JSON with no explanation.
