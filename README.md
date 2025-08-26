@@ -1,6 +1,6 @@
 # AI Youtube Shorts Generator
 
-AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. This tool is currently in version 0.1 and might have some bugs.
+AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. The tool supports both YouTube URLs and local video files (with relative/absolute path support). This tool is currently in version 0.1 and might have some bugs.
 
 If you wish to add shorts generation into your application, here is an api to create shorts from long form videos :- https://docs.vadoo.tv/docs/guide/create-ai-clips
 
@@ -16,6 +16,7 @@ If you wish to add shorts generation into your application, here is an api to cr
 
 ## Features
 
+- **Video Input**: Supports both YouTube URLs and local video files (with relative/absolute path support).
 - **Video Download**: Given a YouTube URL, the tool downloads the video.
 - **Transcription**: Uses Whisper to transcribe the video.
 - **Highlight Extraction**: Utilizes OpenAI's GPT-4 to identify the most engaging parts of the video.
@@ -61,19 +62,50 @@ pip install -r requirements.txt
 
 1. Set up the environment variables.
 
-Create a `.env` file in the project root directory and add your OpenAI API key:
+Create a `.env` file in the project root directory and add your API configuration:
+
+For OpenAI:
 
 ```bash
 OPENAI_API=your_openai_api_key_here
 ```
 
+For Azure OpenAI:
+
+```bash
+USE_AZURE_OPENAI=true
+AZURE_OPENAI_KEY=your_azure_openai_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=your_deployment_name
+```
+
 ## Usage
 
-1. Ensure your `.env` file is correctly set up with your OpenAI API key.
-2. Run the main script and enter the desired YouTube URL when prompted:
+1. Ensure your `.env` file is correctly set up with your OpenAI or Azure OpenAI API configuration.
+
+2. Run the main script with one of the following options:
+
+   **Option 1: Interactive Mode**
+
    ```bash
    python main.py
    ```
+
+   You'll be prompted to enter either a YouTube URL or local video file path.
+
+   **Option 2: Command Line with YouTube URL**
+
+   ```bash
+   python main.py "https://youtube.com/watch?v=VIDEO_ID"
+   ```
+
+   **Option 3: Command Line with Local Video File**
+
+   ```bash
+   python main.py "path/to/your/video.mp4"
+   ```
+
+   The tool automatically detects whether your input is a YouTube URL or a local file path. For local files, both relative and absolute paths are supported and will be converted to absolute paths automatically.
 
 ## Contributing
 
