@@ -7,9 +7,9 @@ from datetime import datetime
 def transcribeAudio(audio_path, outputs_dir="outputs"):
     try:
         print("Transcribing audio...")
-        Device = "cuda" if torch.cuda.is_available() else "cpu"
+        Device = "cpu"  # Force CPU usage due to cuDNN compatibility issues
         print(Device)
-        model = WhisperModel("base.en", device="cuda" if torch.cuda.is_available() else "cpu")
+        model = WhisperModel("base.en", device="cpu")
         print("Model loaded")
         segments, info = model.transcribe(audio=audio_path, beam_size=5, language="en", max_new_tokens=128, condition_on_previous_text=False)
         segments = list(segments)

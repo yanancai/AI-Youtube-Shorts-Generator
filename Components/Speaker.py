@@ -110,14 +110,14 @@ def detect_faces_and_speakers(input_video_path, output_video_path, outputs_dir="
         Frames.append([x, y, x1, y1])
 
         out.write(frame)
-        cv2.imshow('Frame', frame)
+        # cv2.imshow('Frame', frame)  # Commented out for headless environment
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # if cv2.waitKey(1) & 0xFF == ord('q'):  # Commented out for headless environment
+        #     break
 
     cap.release()
     out.release()
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()  # Commented out for headless environment
     
     # Clean up temp audio file
     if os.path.exists(temp_audio_path):
