@@ -94,10 +94,12 @@ def crop_video(faces, input_file, output_file):
 
     return None
 if __name__ == "__main__":
-    input = r"Short.mp4"
+    import os
+    outputs_dir = "outputs"
+    input = os.path.join(outputs_dir, "Short.mp4")
     faces = detect_faces(input)
     print(faces)
-    crop_video(faces, input, "Cropped.mp4")
+    crop_video(faces, input, os.path.join(outputs_dir, "Cropped.mp4"))
     print("DONE")
 
     

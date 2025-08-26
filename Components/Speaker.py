@@ -9,7 +9,6 @@ import os
 # Update paths to the model files
 prototxt_path = "models/deploy.prototxt"
 model_path = "models/res10_300x300_ssd_iter_140000_fp16.caffemodel"
-temp_audio_path = "temp_audio.wav"
 
 # Load DNN model
 net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
@@ -36,9 +35,10 @@ def process_audio_frame(audio_data, sample_rate=16000, frame_duration_ms=30):
 global Frames
 Frames = [] # [x,y,w,h]
 
-def detect_faces_and_speakers(input_video_path, output_video_path):
+def detect_faces_and_speakers(input_video_path, output_video_path, outputs_dir="outputs"):
     # Return Frams:
     global Frames
+    temp_audio_path = os.path.join(outputs_dir, "temp_audio.wav")
     # Extract audio from the video
     extract_audio_from_video(input_video_path, temp_audio_path)
 
@@ -118,7 +118,10 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
     cap.release()
     out.release()
     cv2.destroyAllWindows()
-    os.remove(temp_audio_path)
+    
+    # Clean up temp audio file
+    if os.path.exists(temp_audio_path):
+        os.remove(temp_audio_path)
 
 
 

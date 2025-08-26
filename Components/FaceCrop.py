@@ -2,10 +2,12 @@ import cv2
 import numpy as np
 from moviepy.editor import *
 from Components.Speaker import detect_faces_and_speakers, Frames
+import os
 global Fps
 
-def crop_to_vertical(input_video_path, output_video_path):
-    detect_faces_and_speakers(input_video_path, "DecOut.mp4")
+def crop_to_vertical(input_video_path, output_video_path, outputs_dir="outputs"):
+    dec_out_path = os.path.join(outputs_dir, "DecOut.mp4")
+    detect_faces_and_speakers(input_video_path, dec_out_path, outputs_dir)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)
@@ -130,11 +132,13 @@ def combine_videos(video_with_audio, video_without_audio, output_filename):
 
 
 if __name__ == "__main__":
-    input_video_path = r'Out.mp4'
-    output_video_path = 'Croped_output_video.mp4'
-    final_video_path = 'final_video_with_audio.mp4'
-    detect_faces_and_speakers(input_video_path, "DecOut.mp4")
-    crop_to_vertical(input_video_path, output_video_path)
+    outputs_dir = "outputs"
+    input_video_path = os.path.join(outputs_dir, 'Out.mp4')
+    output_video_path = os.path.join(outputs_dir, 'Croped_output_video.mp4')
+    final_video_path = os.path.join(outputs_dir, 'final_video_with_audio.mp4')
+    dec_out_path = os.path.join(outputs_dir, "DecOut.mp4")
+    detect_faces_and_speakers(input_video_path, dec_out_path, outputs_dir)
+    crop_to_vertical(input_video_path, output_video_path, outputs_dir)
     combine_videos(input_video_path, output_video_path, final_video_path)
 
 

@@ -1,11 +1,12 @@
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.editor import VideoFileClip
 import subprocess
+import os
 
-def extractAudio(video_path):
+def extractAudio(video_path, outputs_dir="outputs"):
     try:
         video_clip = VideoFileClip(video_path)
-        audio_path = "audio.wav"
+        audio_path = os.path.join(outputs_dir, "audio.wav")
         video_clip.audio.write_audiofile(audio_path)
         video_clip.close()
         print(f"Extracted audio to: {audio_path}")
@@ -24,7 +25,7 @@ def crop_video(input_file, output_file, start_time, end_time):
 if __name__ == "__main__":
     input_file = r"Example.mp4" ## Test
     print(input_file)
-    output_file = "Short.mp4"
+    output_file = os.path.join("outputs", "Short.mp4")
     start_time = 31.92 
     end_time = 49.2   
 

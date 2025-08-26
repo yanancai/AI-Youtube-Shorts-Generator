@@ -18,7 +18,8 @@ def transcribeAudio(audio_path):
         return []
 
 if __name__ == "__main__":
-    audio_path = "audio.wav"
+    import os
+    audio_path = os.path.join("outputs", "audio.wav")
     transcriptions = transcribeAudio(audio_path)
     print("Done")
     TransText = ""

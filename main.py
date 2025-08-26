@@ -7,6 +7,14 @@ from Components.Transcription import transcribeAudio
 from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import crop_to_vertical, combine_videos
 
+# Create outputs directory if it doesn't exist
+def ensure_outputs_dir():
+    """Ensure the outputs directory exists"""
+    outputs_dir = "outputs"
+    if not os.path.exists(outputs_dir):
+        os.makedirs(outputs_dir)
+    return outputs_dir
+
 def is_url(input_string):
     """Check if the input string is a URL"""
     return input_string.startswith(('http://', 'https://', 'www.')) or 'youtube.com' in input_string or 'youtu.be' in input_string
@@ -49,6 +57,9 @@ def get_video_file():
 
 Vid = get_video_file()
 if Vid:
+    # Ensure outputs directory exists
+    outputs_dir = ensure_outputs_dir()
+    
     # Only convert webm to mp4 for downloaded YouTube videos
     if Vid.endswith(".webm"):
         Vid = Vid.replace(".webm", ".mp4")
@@ -56,7 +67,7 @@ if Vid:
     else:
         print(f"Using video file: {Vid}")
 
-    Audio = extractAudio(Vid)
+    Audio = extractAudio(Vid, outputs_dir)
     if Audio:
 
         transcriptions = transcribeAudio(Audio)
@@ -70,13 +81,13 @@ if Vid:
             if start != 0 and stop != 0:
                 print(f"Start: {start} , End: {stop}")
 
-                Output = "Out.mp4"
+                Output = os.path.join(outputs_dir, "Out.mp4")
 
                 crop_video(Vid, Output, start, stop)
-                croped = "croped.mp4"
+                croped = os.path.join(outputs_dir, "croped.mp4")
 
-                crop_to_vertical("Out.mp4", croped)
-                combine_videos("Out.mp4", croped, "Final.mp4")
+                crop_to_vertical(Output, croped, outputs_dir)
+                combine_videos(Output, croped, os.path.join(outputs_dir, "Final.mp4"))
             else:
                 print("Error in getting highlight")
         else:
