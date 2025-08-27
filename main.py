@@ -50,30 +50,40 @@ def is_url(input_string):
     return input_string.startswith(('http://', 'https://', 'www.')) or 'youtube.com' in input_string or 'youtu.be' in input_string
 
 def get_video_file():
-    """Get video file either from YouTube URL or local file path"""
+    """Get video file either from YouTube URL or local file path, plus video title"""
     parser = argparse.ArgumentParser(description='AI YouTube Shorts Generator - Individual Clips Mode')
     parser.add_argument('input', nargs='?', help='YouTube URL or local video file path (supports relative paths)')
     parser.add_argument('--single-segment', action='store_true', help='Use single segment mode (legacy behavior)')
     parser.add_argument('--process-face-crop', action='store_true', help='Apply face detection and vertical cropping to clips')
+    parser.add_argument('--video-title', type=str, help='Title of the video for context in clip selection')
     
     args = parser.parse_args()
     
     # If command line argument is provided, use it
     if args.input:
+        video_title = args.video_title or input("Enter video title for context (e.g., 'Tech Interview Tips'): ").strip()
+        if not video_title:
+            video_title = "Video"  # Default fallback
+            
         if is_url(args.input):
             print(f"Detected YouTube URL: {args.input}")
-            return download_youtube_video(args.input), args.single_segment, args.process_face_crop
+            return download_youtube_video(args.input), args.single_segment, args.process_face_crop, video_title
         else:
             # Treat as local file path
             video_path = os.path.abspath(args.input)
             if not os.path.exists(video_path):
                 print(f"Error: Video file '{video_path}' not found.")
-                return None, args.single_segment, args.process_face_crop
+                return None, args.single_segment, args.process_face_crop, video_title
             print(f"Using local video file: {video_path}")
-            return video_path, args.single_segment, args.process_face_crop
+            return video_path, args.single_segment, args.process_face_crop, video_title
     else:
         # Interactive mode - ask user for input
         user_input = input("Enter YouTube URL or local video file path: ").strip()
+        
+        # Ask for video title in interactive mode
+        video_title = input("Enter video title for context (e.g., 'Tech Interview Tips'): ").strip()
+        if not video_title:
+            video_title = "Video"  # Default fallback
         
         # Ask about mode in interactive mode
         mode_choice = input("Use individual clips mode? (y/n, default: y): ").strip().lower()
@@ -84,17 +94,17 @@ def get_video_file():
         
         if is_url(user_input):
             print(f"Detected YouTube URL: {user_input}")
-            return download_youtube_video(user_input), single_segment, process_face_crop
+            return download_youtube_video(user_input), single_segment, process_face_crop, video_title
         else:
             # Treat as local file path
             video_path = os.path.abspath(user_input)
             if not os.path.exists(video_path):
                 print(f"Error: Video file '{video_path}' not found.")
-                return None, single_segment, process_face_crop
+                return None, single_segment, process_face_crop, video_title
             print(f"Using local video file: {video_path}")
-            return video_path, single_segment, process_face_crop
+            return video_path, single_segment, process_face_crop, video_title
 
-Vid, single_segment_mode, process_face_crop = get_video_file()
+Vid, single_segment_mode, process_face_crop, video_title = get_video_file()
 if Vid:
     # Create organized run directory with timestamp
     outputs_dir = create_run_directory()
@@ -127,7 +137,7 @@ if Vid:
             if single_segment_mode:
                 print("Using single segment mode...")
                 # Original single highlight method - pass the full transcription result
-                start, stop = GetHighlight(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
+                start, stop = GetHighlight(transcription_result, os.path.join(outputs_dir, "gpt_interactions"), video_title)
                 if start != 0 and stop != 0:
                     print(f"Start: {start} , End: {stop}")
                     
@@ -146,7 +156,7 @@ if Vid:
             else:
                 print("Using individual clips mode...")
                 # Get multiple highlights for individual clips - pass the full transcription result
-                segments = GetMultipleHighlights(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
+                segments = GetMultipleHighlights(transcription_result, os.path.join(outputs_dir, "gpt_interactions"), video_title)
                 
                 if segments:
                     # Refine segments with word-level timestamps for more precision
@@ -194,23 +204,8 @@ if Vid:
                     else:
                         print("No clips were successfully processed")
                 else:
-                    print("Error in getting highlights - falling back to single highlight")
-                    # Fallback to original single highlight method
-                    start, stop = GetHighlight(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
-                    if start != 0 and stop != 0:
-                        print(f"Fallback - Start: {start} , End: {stop}")
-                        
-                        Output = os.path.join(outputs_dir, "clips", "Out.mp4")
-                        crop_video(Vid, Output, start, stop)
-                        
-                        if process_face_crop:
-                            croped = os.path.join(outputs_dir, "face_detection", "croped.mp4")
-                            crop_to_vertical(Output, croped, os.path.join(outputs_dir, "face_detection"))
-                            combine_videos(Output, croped, os.path.join(outputs_dir, "clips", "Final.mp4"))
-                        
-                        print("Fallback single segment video created!")
-                    else:
-                        print("Error in getting highlight")
+                    print("Error: Failed to get multiple highlights")
+                    sys.exit(1)  # Exit with error code instead of falling back
         else:
             print("No transcriptions found")
     else:

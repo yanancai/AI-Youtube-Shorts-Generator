@@ -407,9 +407,10 @@ Any Example
 """
 
 
-def GetHighlight(Transcription, gpt_interactions_dir="outputs"):
+def GetHighlight(Transcription, gpt_interactions_dir="outputs", video_title="Video"):
     print("Getting Highlight from Transcription ")
     try:
+        print(f"🔍 Video title: {video_title}")
         print(f"🔍 Transcription type: {type(Transcription)}")
         print(f"🔍 Transcription keys: {Transcription.keys() if isinstance(Transcription, dict) else 'Not a dict'}")
         
@@ -451,6 +452,7 @@ def GetHighlight(Transcription, gpt_interactions_dir="outputs"):
         try:
             # Use replace instead of format to avoid issues with curly braces in transcript
             prompt_with_transcript = system.replace('{transcript}', input_text)
+            prompt_with_transcript = prompt_with_transcript.replace('{video_title}', video_title)
             print("✅ Prompt formatting successful")
         except Exception as format_error:
             print(f"❌ Error in prompt formatting: {format_error}")
@@ -478,7 +480,7 @@ def GetHighlight(Transcription, gpt_interactions_dir="outputs"):
                     {"role": "user", "content": prompt_with_transcript},
                 ],
                 "temperature": 0.7,
-                "max_tokens": 1024,
+                "max_tokens": 32000,
             }
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
@@ -505,7 +507,7 @@ def GetHighlight(Transcription, gpt_interactions_dir="outputs"):
             print(f"⚠️  No valid segment found in GPT response")
             Ask = input("Error - Get Highlights again (y/n) -> ").lower()
             if Ask == "y":
-                Start, End = GetHighlight(Transcription, gpt_interactions_dir)
+                Start, End = GetHighlight(Transcription, gpt_interactions_dir, video_title)
         return Start, End
     except Exception as e:
         print(f"Error in GetHighlight: {e}")
@@ -517,9 +519,10 @@ def GetHighlight(Transcription, gpt_interactions_dir="outputs"):
         return 0, 0
 
 
-def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs"):
+def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs", video_title="Video"):
     print("Getting Multiple Highlights from Transcription ")
     try:
+        print(f"🔍 Video title: {video_title}")
         print(f"🔍 Transcription type: {type(Transcription)}")
         print(f"🔍 Transcription keys: {Transcription.keys() if isinstance(Transcription, dict) else 'Not a dict'}")
         
@@ -561,6 +564,7 @@ def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs"):
         try:
             # Use replace instead of format to avoid issues with curly braces in transcript
             prompt_with_transcript = system.replace('{transcript}', input_text)
+            prompt_with_transcript = prompt_with_transcript.replace('{video_title}', video_title)
             print("✅ Prompt formatting successful")
         except Exception as format_error:
             print(f"❌ Error in prompt formatting: {format_error}")
@@ -588,7 +592,7 @@ def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs"):
                     {"role": "user", "content": prompt_with_transcript},
                 ],
                 "temperature": 0.7,
-                "max_tokens": 2048,
+                "max_tokens": 32000,
             }
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
@@ -615,7 +619,7 @@ def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs"):
             print(f"⚠️  No valid segments found in GPT response")
             Ask = input("Error - Get Highlights again (y/n) -> ").lower()
             if Ask == "y":
-                segments = GetMultipleHighlights(Transcription, gpt_interactions_dir)
+                segments = GetMultipleHighlights(Transcription, gpt_interactions_dir, video_title)
         return segments
     except Exception as e:
         print(f"Error in GetMultipleHighlights: {e}")
@@ -778,4 +782,4 @@ def estimate_timing_from_position(segment, transcription_result):
 
 
 if __name__ == "__main__":
-    print(GetHighlight(User))
+    print(GetHighlight(User, "outputs", "Test Video"))

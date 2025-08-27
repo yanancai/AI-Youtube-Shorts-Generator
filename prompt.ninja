@@ -1,39 +1,44 @@
-Based on the conversation transcript provided below, identify the most engaging and interesting parts that can be turned into individual short video clips. Each clip should be under 60 seconds and contain complete, self-contained content with natural beginning and ending points.
+Extract 2–8 highly engaging, self‑contained clip candidates from the transcript below. Each clip must be one continuous verbatim segment (no stitching) that starts at a sentence (or minimal needed setup) and ends cleanly after a punchline, payoff, reaction, conclusion, or full list.
 
-IMPORTANT: For each clip, you must provide the EXACT QUOTE from the conversation - word for word as it appears in the transcript. Do not paraphrase, summarize, or rephrase the content. Copy the exact text that should be included in the clip.
+VERBATIM (NO EDITS): Copy EXACT words: speaker labels, punctuation, hesitations, informal speech. No paraphrasing, trimming inside sentences, reordering, or merging discontiguous lines.
 
-Select segments that:
-- Have high engagement potential (funny moments, key insights, dramatic moments, compelling stories)
-- Are complete thoughts, stories, or exchanges that don't require external context
-- Can stand alone as individual short videos with clear narrative arc
-- Represent the most interesting and shareable parts of the conversation
-- Have natural conversation flow and ending points
-- Include speaker changes and dialogue when relevant
+WHEN CHOOSING BOUNDARIES:
+- If the key moment is mid‑sentence, expand back to that sentence start (optionally 1 short prior line for clarity).
+- Include minimal setup so it’s instantly understandable (usually ≤1–2 short prior exchanges).
+- Include full lists; don’t cut mid‑list.
+- Don’t end on dangling “and/so/but…”.
+- Avoid segments that depend on off‑screen context (“like I said earlier”) unless self‑explained.
+- Preserve all speaker turns unaltered; if messy ending, extend to the next natural beat instead of trimming words.
 
-For each clip, provide:
-1. A catchy, descriptive title (under 60 characters) suitable for social media
-2. The EXACT TEXT from the conversation (word-for-word quote)
-3. Why this segment is engaging and shareable
-4. Priority ranking (1-10, where 1 is most important)
+SELECTION PRIORITIES:
+1. High engagement (humor, insight, vivid story, counterintuitive angle, crisp framework, emotional beat).
+2. Clear arc (setup → development → payoff / takeaway).
+3. Shareable / memorable.
+4. Variety of themes (avoid near duplicates).
 
-Return your response in this JSON format:
+LENGTH: Prefer under 2 minutes; longer only if required to keep a single coherent story/framework intact. Never split one unified anecdote just to be shorter.
+
+AVOID: Mid‑sentence starts/ends, teasers without delivery, disjoint collages, purely meta logistics (unless notably funny), dangling conjunction endings.
+
+VALIDATE EACH CLIP: natural start, full idea, clean ending, one contiguous verbatim block, acceptable length (pref <2m, else justified by completeness).
+
+OUTPUT FIELDS (JSON ONLY):
+1. title: Under 60 chars; specific, non‑clickbait; conveys hook/payoff.
+2. exact_quote: Verbatim continuous excerpt (with speaker labels if present). No timestamps or added notes.
+3. content: Why it’s engaging (the appeal, not a summary repeat).
+4. priority: Integer 1–10 (1 = strongest). No ties.
+
+OUTPUT FORMAT (STRICT): JSON array only, e.g.
 [
   {
-    "title": "Catchy title for social media",
-    "exact_quote": "The exact words from the conversation, including speaker labels if multiple speakers",
-    "content": "Brief explanation of why this segment is engaging",
+    "title": "Concise hook",
+    "exact_quote": "VERBATIM...",
+    "content": "Explains why it's compelling (e.g., surprising reversal).",
     "priority": 1
   }
 ]
 
-Rules:
-- Return 2-8 clips maximum, prioritizing quality over quantity
-- Each "exact_quote" must be verbatim from the transcript
-- Include speaker labels in quotes when there are multiple speakers
-- Ensure quotes have natural beginning and ending points
-- Each clip should be compelling enough to drive engagement on social media
-- Do not include timestamps in the exact_quote field
-- Return only valid JSON with no additional explanation
+RULE REMINDERS: 2–8 clips; verbatim; continuous; natural start/end; include speaker labels; no timestamps; valid JSON only.
 
 TRANSCRIPT:
 {transcript}
