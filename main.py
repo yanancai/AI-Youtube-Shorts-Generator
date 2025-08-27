@@ -3,7 +3,7 @@ import sys
 import argparse
 from datetime import datetime
 from Components.YoutubeDownloader import download_youtube_video
-from Components.Edit import extractAudio, crop_video, process_individual_clips, create_clips_summary
+from Components.Edit import extractAudio, cleanup_temporary_audio, crop_video, process_individual_clips, create_clips_summary
 from Components.Transcription import transcribeAudio
 from Components.LanguageTasks import GetHighlight, GetMultipleHighlights, refine_segments_with_word_timestamps
 from Components.FaceCrop import crop_to_vertical, combine_videos
@@ -116,14 +116,17 @@ if Vid:
     else:
         print(f"Using video file: {Vid}")
 
-    # Extract audio to the audio subdirectory
-    Audio = extractAudio(Vid, os.path.join(outputs_dir, "audio"))
+    # Extract audio temporarily for transcription only
+    Audio = extractAudio(Vid, os.path.join(outputs_dir, "audio"), temporary=True)
     if Audio:
         # Enhanced transcription with word-level timestamps and speaker diarization
         # Pass the transcription subdirectory
         transcription_result = transcribeAudio(Audio, os.path.join(outputs_dir, "transcription"), 
                                              enable_word_timestamps=True, 
                                              enable_speaker_diarization=True)
+        
+        # Clean up temporary audio file after transcription
+        cleanup_temporary_audio(Audio)
         
         if transcription_result and len(transcription_result.get('segments', [])) > 0:
             # For backward compatibility, extract the segments in the old format

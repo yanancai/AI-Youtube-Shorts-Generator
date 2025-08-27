@@ -117,40 +117,23 @@ def crop_to_vertical(input_video_path, output_video_path, face_detection_dir="ou
 
 def combine_videos(video_with_audio, video_without_audio, output_filename):
     try:
-        import subprocess
+        # Use MoviePy method with working PCM codec
+        clip_with_audio = VideoFileClip(video_with_audio)
+        clip_without_audio = VideoFileClip(video_without_audio)
         
-        # Use ffmpeg for more reliable audio/video combination
-        cmd = [
-            'ffmpeg', '-i', video_without_audio, '-i', video_with_audio,
-            '-c:v', 'libx264', '-c:a', 'aac', 
-            '-map', '0:v:0', '-map', '1:a:0',
-            '-shortest', '-preset', 'medium', '-crf', '23', '-y', output_filename
-        ]
+        audio = clip_with_audio.audio
+        combined_clip = clip_without_audio.set_audio(audio)
         
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        # Get FPS from the video file if Fps global variable is not set
+        try:
+            global Fps
+            fps = Fps
+        except NameError:
+            fps = clip_without_audio.fps
+            print(f"Using FPS from video file: {fps}")
         
-        if result.returncode == 0:
-            print(f"Combined video saved successfully as {output_filename}")
-        else:
-            print(f"Error combining video and audio: {result.stderr}")
-            # Fallback to MoviePy method
-            print("Trying fallback MoviePy method...")
-            clip_with_audio = VideoFileClip(video_with_audio)
-            clip_without_audio = VideoFileClip(video_without_audio)
-            
-            audio = clip_with_audio.audio
-            combined_clip = clip_without_audio.set_audio(audio)
-            
-            # Get FPS from the video file if Fps global variable is not set
-            try:
-                global Fps
-                fps = Fps
-            except NameError:
-                fps = clip_without_audio.fps
-                print(f"Using FPS from video file: {fps}")
-            
-            combined_clip.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=fps, preset='medium', bitrate='3000k')
-            print(f"Combined video saved successfully as {output_filename}")
+        combined_clip.write_videofile(output_filename, codec='libx264', audio_codec='libmp3lame', fps=fps, preset='medium', bitrate='3000k')
+        print(f"Combined video saved successfully as {output_filename}")
     
     except Exception as e:
         print(f"Error combining video and audio: {str(e)}")

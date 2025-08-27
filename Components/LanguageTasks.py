@@ -466,9 +466,6 @@ def GetHighlight(Transcription, gpt_interactions_dir="outputs", video_title="Vid
         print(f"🔤 Prompt preview: {prompt_with_transcript[:300]}...")
         print(f"🔤 Using Azure OpenAI: {USE_AZURE_OPENAI}")
         
-        # Save input immediately, regardless of what happens with the response
-        save_gpt_interaction(prompt_with_transcript, "REQUEST_SENT", "single", gpt_interactions_dir)
-        
         if USE_AZURE_OPENAI:
             url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version={AZURE_OPENAI_API_VERSION}"
             headers = {
@@ -577,9 +574,6 @@ def GetMultipleHighlights(Transcription, gpt_interactions_dir="outputs", video_t
         print(f"🔤 Prompt length: {len(prompt_with_transcript)} characters")
         print(f"🔤 Prompt preview: {prompt_with_transcript[:300]}...")
         print(f"🔤 Using Azure OpenAI: {USE_AZURE_OPENAI}")
-        
-        # Save input immediately, regardless of what happens with the response
-        save_gpt_interaction(prompt_with_transcript, "REQUEST_SENT", "multiple", gpt_interactions_dir)
             
         if USE_AZURE_OPENAI:
             url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version={AZURE_OPENAI_API_VERSION}"
@@ -696,25 +690,30 @@ def refine_segments_with_word_timestamps(segments, transcription_result, timesta
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         refinement_path = os.path.join(timestamp_refinement_dir, f"refinement_{timestamp}.json")
         
-        refinement_data = {
+        # Create cleaner output with only final results
+        refined_data = {
             "timestamp": datetime.now().isoformat(),
-            "original_segments": segments,
-            "refined_segments": refined_segments,
+            "clips": refined_segments,
             "refinement_summary": {
                 "total_segments": len(segments),
                 "successfully_refined": len([s for s in refined_segments if 'word_match_confidence' in s]),
                 "failed_refinements": len([s for s in refined_segments if 'word_match_confidence' not in s]),
-                "avg_confidence": sum(s.get('word_match_confidence', 0) for s in refined_segments) / len(refined_segments) if refined_segments else 0
+                "avg_confidence": sum(s.get('word_match_confidence', 0) for s in refined_segments) / len(refined_segments) if refined_segments else 0,
+                "notes": {
+                    "word_matched": "Clips with 'word_match_confidence' field were matched using word-level timestamps",
+                    "estimated": "Clips with 'timing_method': 'estimated' used fallback timing",
+                    "confidence_scale": "Confidence ranges from 0.0 to 1.0, where 1.0 means perfect text match"
+                }
             }
         }
         
         with open(refinement_path, 'w', encoding='utf-8') as f:
-            json.dump(refinement_data, f, indent=2, ensure_ascii=False)
+            json.dump(refined_data, f, indent=2, ensure_ascii=False)
         
         print(f"\n🔍 Timestamp refinement details saved to: {refinement_path}")
         
         # Print summary
-        summary = refinement_data['refinement_summary']
+        summary = refined_data['refinement_summary']
         print(f"📊 Refinement Summary:")
         print(f"   • Total clips: {summary['total_segments']}")
         print(f"   • Successfully refined: {summary['successfully_refined']}")
@@ -762,21 +761,36 @@ def estimate_timing_from_position(segment, transcription_result):
     """
     Estimate timing for a segment based on its position and content if exact matching fails
     """
-    segments = transcription_result.get('segments', [])
-    if not segments:
-        return segment
+    # Try to get total duration from word segments or transcript segments
+    word_segments = transcription_result.get('word_segments', [])
+    if word_segments:
+        total_duration = word_segments[-1].get('end', 60)
+    else:
+        # Fallback to transcript segments
+        segments = transcription_result.get('segments', [])
+        if segments and isinstance(segments[-1], dict):
+            total_duration = segments[-1].get('end', 60)
+        elif segments and len(segments[-1]) > 2:
+            total_duration = segments[-1][2]  # Legacy format (text, start, end)
+        else:
+            total_duration = 60  # Default fallback
     
-    # For now, just use a simple fallback
-    # In a more sophisticated version, we could try fuzzy matching or content analysis
-    total_duration = segments[-1][2] if segments else 60  # Last segment end time
-    estimated_start = max(0, total_duration * 0.1)  # Start at 10% through
+    # Get the segment priority to help estimate position
+    priority = segment.get('priority', 5)
+    segment_index = priority - 1  # Priority 1 = index 0
+    
+    # Estimate based on priority/position (higher priority usually appears earlier)
+    position_ratio = min(segment_index * 0.15, 0.8)  # Spread segments across the content
+    estimated_start = total_duration * position_ratio
     estimated_end = min(total_duration, estimated_start + 30)  # 30 second clip
     
     segment = segment.copy()
-    segment['start'] = estimated_start
-    segment['end'] = estimated_end
-    segment['duration'] = estimated_end - estimated_start
+    segment['start'] = round(estimated_start, 2)
+    segment['end'] = round(estimated_end, 2)
+    segment['duration'] = round(estimated_end - estimated_start, 2)
     segment['timing_method'] = 'estimated'
+    
+    print(f"   📍 Estimated timing: {segment['start']}-{segment['end']}s based on priority {priority}")
     
     return segment
 

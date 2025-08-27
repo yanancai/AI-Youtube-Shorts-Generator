@@ -4,7 +4,7 @@ import subprocess
 import os
 import re
 
-def extractAudio(video_path, audio_output_dir="outputs"):
+def extractAudio(video_path, audio_output_dir="outputs", temporary=False):
     try:
         # Ensure the output directory exists
         os.makedirs(audio_output_dir, exist_ok=True)
@@ -13,11 +13,24 @@ def extractAudio(video_path, audio_output_dir="outputs"):
         audio_path = os.path.join(audio_output_dir, "audio.wav")
         video_clip.audio.write_audiofile(audio_path)
         video_clip.close()
-        print(f"Extracted audio to: {audio_path}")
+        
+        if temporary:
+            print(f"Extracted temporary audio for processing: {audio_path}")
+        else:
+            print(f"Extracted audio to: {audio_path}")
         return audio_path
     except Exception as e:
         print(f"An error occurred while extracting audio: {e}")
         return None
+
+def cleanup_temporary_audio(audio_path):
+    """Remove temporary audio file if it exists"""
+    try:
+        if audio_path and os.path.exists(audio_path):
+            os.remove(audio_path)
+            print(f"Cleaned up temporary audio file: {audio_path}")
+    except Exception as e:
+        print(f"Warning: Could not clean up temporary audio file: {e}")
 
 
 def crop_video(input_file, output_file, start_time, end_time):
@@ -37,14 +50,15 @@ def crop_video(input_file, output_file, start_time, end_time):
         
         cropped_video = video.subclip(start_time, end_time)
         
-        # Write with high quality settings to preserve timing precision
+        # Write with MP3 audio codec for smaller file sizes
         cropped_video.write_videofile(
             output_file, 
             codec='libx264',
-            audio_codec='aac',
-            temp_audiofile='temp-audio.m4a',
+            audio_codec='libmp3lame',  # MP3 for good compression and compatibility
+            temp_audiofile='temp-audio.wav',  # Changed from .m4a to .wav
             remove_temp=True
         )
+
 
 
 def sanitize_filename(title):
@@ -159,7 +173,8 @@ def create_clips_summary(processed_clips, clips_output_dir):
                     f.write(f"    File: {clip['filename']}\n")
                     f.write(f"    Duration: {clip['duration']:.1f}s\n")
                     f.write(f"    Priority: {clip['priority']}\n")
-                    f.write(f"    Description: {clip['content']}\n\n")
+                    f.write(f"    Description: {clip['content']}\n")
+                    f.write("\n")
             
             if failed_clips:
                 f.write("FAILED CLIPS:\n")

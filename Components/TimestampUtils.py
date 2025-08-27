@@ -33,8 +33,19 @@ def find_word_timestamps(text_to_find, word_segments):
     matcher = difflib.SequenceMatcher(None, transcript_words, target_words)
     match = matcher.find_longest_match(0, len(transcript_words), 0, len(target_words))
     
-    if match.size < len(target_words) * 0.7:  # At least 70% match
-        print(f"Warning: Poor match for text: {text_to_find[:50]}...")
+    # Dynamic confidence threshold - more lenient for longer segments
+    if len(target_words) <= 20:
+        confidence_threshold = 0.8  # 80% for short segments
+    elif len(target_words) <= 50:
+        confidence_threshold = 0.7  # 70% for medium segments  
+    elif len(target_words) <= 100:
+        confidence_threshold = 0.6  # 60% for long segments
+    else:
+        confidence_threshold = 0.5  # 50% for very long segments (200+ words)
+    
+    match_ratio = match.size / len(target_words)
+    if match_ratio < confidence_threshold:
+        print(f"Warning: Poor match for text ({match.size}/{len(target_words)} = {match_ratio:.2f}, need {confidence_threshold:.2f}): {text_to_find[:50]}...")
         return None
     
     # Get timestamps for the matched words
@@ -53,7 +64,7 @@ def find_word_timestamps(text_to_find, word_segments):
         'start_time': start_time,
         'end_time': end_time,
         'matched_words': matched_words,
-        'confidence': match.size / len(target_words)
+        'confidence': match_ratio
     }
 
 
