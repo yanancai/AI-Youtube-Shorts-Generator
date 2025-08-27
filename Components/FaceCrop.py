@@ -5,9 +5,12 @@ from Components.Speaker import detect_faces_and_speakers, Frames
 import os
 global Fps
 
-def crop_to_vertical(input_video_path, output_video_path, outputs_dir="outputs"):
-    dec_out_path = os.path.join(outputs_dir, "DecOut.mp4")
-    detect_faces_and_speakers(input_video_path, dec_out_path, outputs_dir)
+def crop_to_vertical(input_video_path, output_video_path, face_detection_dir="outputs"):
+    # Ensure face detection directory exists
+    os.makedirs(face_detection_dir, exist_ok=True)
+    
+    dec_out_path = os.path.join(face_detection_dir, "DecOut.mp4")
+    detect_faces_and_speakers(input_video_path, dec_out_path, face_detection_dir)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)

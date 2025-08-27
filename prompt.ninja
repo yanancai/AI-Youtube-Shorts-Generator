@@ -1,26 +1,39 @@
-Based on the Transcription provided with start and end timestamps, identify the most engaging and interesting parts that can be turned into individual short videos. Each segment should be under 60 seconds and contain complete, self-contained content that makes sense on its own.
+Based on the conversation transcript provided below, identify the most engaging and interesting parts that can be turned into individual short video clips. Each clip should be under 60 seconds and contain complete, self-contained content with natural beginning and ending points.
+
+IMPORTANT: For each clip, you must provide the EXACT QUOTE from the conversation - word for word as it appears in the transcript. Do not paraphrase, summarize, or rephrase the content. Copy the exact text that should be included in the clip.
 
 Select segments that:
-- Have high engagement potential (funny moments, key insights, dramatic moments, etc.)
-- Are complete thoughts or stories that don't require external context
-- Can stand alone as individual short videos
-- Represent the most interesting parts of the content
-- Have clear beginnings and endings
+- Have high engagement potential (funny moments, key insights, dramatic moments, compelling stories)
+- Are complete thoughts, stories, or exchanges that don't require external context
+- Can stand alone as individual short videos with clear narrative arc
+- Represent the most interesting and shareable parts of the conversation
+- Have natural conversation flow and ending points
+- Include speaker changes and dialogue when relevant
 
-Follow this Format and return in valid json:
-[{
-"start": "Start time of the clip (in seconds)",
-"end": "End time of the clip (in seconds)", 
-"title": "Catchy, descriptive title for this clip (under 60 characters)",
-"content": "Brief description of what makes this segment engaging",
-"priority": "1-10 ranking of importance (1 being most important)"
-},
-{
-"start": "Start time of the clip (in seconds)",
-"end": "End time of the clip (in seconds)",
-"title": "Catchy, descriptive title for this clip (under 60 characters)", 
-"content": "Brief description of what makes this segment engaging", 
-"priority": "1-10 ranking of importance (1 being most important)"
-}]
+For each clip, provide:
+1. A catchy, descriptive title (under 60 characters) suitable for social media
+2. The EXACT TEXT from the conversation (word-for-word quote)
+3. Why this segment is engaging and shareable
+4. Priority ranking (1-10, where 1 is most important)
 
-Return as many segments as you find interesting (typically 2-8), but prioritize quality over quantity. Each clip will be processed as a separate video. Don't say anything else, just return proper JSON with no explanation.
+Return your response in this JSON format:
+[
+  {
+    "title": "Catchy title for social media",
+    "exact_quote": "The exact words from the conversation, including speaker labels if multiple speakers",
+    "content": "Brief explanation of why this segment is engaging",
+    "priority": 1
+  }
+]
+
+Rules:
+- Return 2-8 clips maximum, prioritizing quality over quantity
+- Each "exact_quote" must be verbatim from the transcript
+- Include speaker labels in quotes when there are multiple speakers
+- Ensure quotes have natural beginning and ending points
+- Each clip should be compelling enough to drive engagement on social media
+- Do not include timestamps in the exact_quote field
+- Return only valid JSON with no additional explanation
+
+TRANSCRIPT:
+{transcript}

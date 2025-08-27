@@ -11,4 +11,6 @@ torch
 webrtcvad-wheels
 pydub
 openai==1.44.1
+pyannote-audio==3.1.0
+difflib
 --extra-index-url https://download.pytorch.org/whl/cu121

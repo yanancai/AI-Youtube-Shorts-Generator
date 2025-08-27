@@ -1,15 +1,45 @@
 import os
 import sys
 import argparse
+from datetime import datetime
 from Components.YoutubeDownloader import download_youtube_video
 from Components.Edit import extractAudio, crop_video, process_individual_clips, create_clips_summary
 from Components.Transcription import transcribeAudio
-from Components.LanguageTasks import GetHighlight, GetMultipleHighlights
+from Components.LanguageTasks import GetHighlight, GetMultipleHighlights, refine_segments_with_word_timestamps
 from Components.FaceCrop import crop_to_vertical, combine_videos
 
-# Create outputs directory if it doesn't exist
+# Create organized outputs directory structure with timestamp
+def create_run_directory():
+    """Create a timestamped run directory with organized subdirectories"""
+    # Create base outputs directory
+    base_outputs_dir = "outputs"
+    if not os.path.exists(base_outputs_dir):
+        os.makedirs(base_outputs_dir)
+    
+    # Create timestamped run directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join(base_outputs_dir, f"run_{timestamp}")
+    
+    # Create subdirectories for better organization
+    subdirs = [
+        "audio",           # For audio files
+        "transcription",   # For transcription files
+        "clips",          # For video clips
+        "gpt_interactions", # For GPT logs
+        "timestamp_refinement", # For timestamp refinement data
+        "face_detection"   # For face detection outputs
+    ]
+    
+    for subdir in subdirs:
+        subdir_path = os.path.join(run_dir, subdir)
+        os.makedirs(subdir_path, exist_ok=True)
+    
+    print(f"Created run directory: {run_dir}")
+    return run_dir
+
+# Legacy function for backward compatibility
 def ensure_outputs_dir():
-    """Ensure the outputs directory exists"""
+    """Ensure the outputs directory exists (legacy function)"""
     outputs_dir = "outputs"
     if not os.path.exists(outputs_dir):
         os.makedirs(outputs_dir)
@@ -66,8 +96,8 @@ def get_video_file():
 
 Vid, single_segment_mode, process_face_crop = get_video_file()
 if Vid:
-    # Ensure outputs directory exists
-    outputs_dir = ensure_outputs_dir()
+    # Create organized run directory with timestamp
+    outputs_dir = create_run_directory()
     
     # Only convert webm to mp4 for downloaded YouTube videos
     if Vid.endswith(".webm"):
@@ -76,30 +106,38 @@ if Vid:
     else:
         print(f"Using video file: {Vid}")
 
-    Audio = extractAudio(Vid, outputs_dir)
+    # Extract audio to the audio subdirectory
+    Audio = extractAudio(Vid, os.path.join(outputs_dir, "audio"))
     if Audio:
-
-        transcriptions = transcribeAudio(Audio, outputs_dir)
-        if len(transcriptions) > 0:
+        # Enhanced transcription with word-level timestamps and speaker diarization
+        # Pass the transcription subdirectory
+        transcription_result = transcribeAudio(Audio, os.path.join(outputs_dir, "transcription"), 
+                                             enable_word_timestamps=True, 
+                                             enable_speaker_diarization=True)
+        
+        if transcription_result and len(transcription_result.get('segments', [])) > 0:
+            # For backward compatibility, extract the segments in the old format
+            transcriptions = transcription_result['segments']
+            
+            # Build the old format text for legacy compatibility
             TransText = ""
-
             for text, start, end in transcriptions:
                 TransText += (f"{start} - {end}: {text}")
 
             if single_segment_mode:
                 print("Using single segment mode...")
-                # Original single highlight method
-                start, stop = GetHighlight(TransText)
+                # Original single highlight method - pass the full transcription result
+                start, stop = GetHighlight(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
                 if start != 0 and stop != 0:
                     print(f"Start: {start} , End: {stop}")
                     
-                    Output = os.path.join(outputs_dir, "Out.mp4")
+                    Output = os.path.join(outputs_dir, "clips", "Out.mp4")
                     crop_video(Vid, Output, start, stop)
                     
                     if process_face_crop:
-                        croped = os.path.join(outputs_dir, "croped.mp4")
-                        crop_to_vertical(Output, croped, outputs_dir)
-                        combine_videos(Output, croped, os.path.join(outputs_dir, "Final.mp4"))
+                        croped = os.path.join(outputs_dir, "face_detection", "croped.mp4")
+                        crop_to_vertical(Output, croped, os.path.join(outputs_dir, "face_detection"))
+                        combine_videos(Output, croped, os.path.join(outputs_dir, "clips", "Final.mp4"))
                         print("Single segment video with face cropping created successfully!")
                     else:
                         print("Single segment video created successfully!")
@@ -107,18 +145,25 @@ if Vid:
                     print("Error in getting highlight")
             else:
                 print("Using individual clips mode...")
-                # Get multiple highlights for individual clips
-                segments = GetMultipleHighlights(TransText)
+                # Get multiple highlights for individual clips - pass the full transcription result
+                segments = GetMultipleHighlights(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
                 
                 if segments:
-                    print(f"Found {len(segments)} engaging segments:")
-                    for i, segment in enumerate(segments):
+                    # Refine segments with word-level timestamps for more precision
+                    print("Refining segment timestamps using word-level matching...")
+                    refined_segments = refine_segments_with_word_timestamps(segments, transcription_result, os.path.join(outputs_dir, "timestamp_refinement"))
+                    
+                    print(f"Found {len(refined_segments)} engaging segments:")
+                    for i, segment in enumerate(refined_segments):
                         duration = segment.get('duration', segment['end'] - segment['start'])
-                        print(f"  {i+1}. '{segment.get('title', f'Clip {i+1}')}' ({segment['start']}-{segment['end']}s, {duration:.1f}s)")
+                        confidence_info = ""
+                        if 'word_match_confidence' in segment:
+                            confidence_info = f" (confidence: {segment['word_match_confidence']:.2f})"
+                        print(f"  {i+1}. '{segment.get('title', f'Clip {i+1}')}' ({segment['start']}-{segment['end']}s, {duration:.1f}s){confidence_info}")
                         print(f"     Priority {segment['priority']}: {segment['content']}")
                     
-                    # Process each clip individually
-                    processed_clips = process_individual_clips(Vid, segments, outputs_dir)
+                    # Process each clip individually with refined timestamps
+                    processed_clips = process_individual_clips(Vid, refined_segments, os.path.join(outputs_dir, "clips"))
                     
                     if processed_clips:
                         # Optionally apply face cropping to each clip
@@ -129,9 +174,9 @@ if Vid:
                                     try:
                                         input_path = clip['path']
                                         cropped_filename = f"cropped_{clip['filename']}"
-                                        cropped_path = os.path.join(outputs_dir, cropped_filename)
+                                        cropped_path = os.path.join(outputs_dir, "face_detection", cropped_filename)
                                         
-                                        crop_to_vertical(input_path, cropped_path, outputs_dir)
+                                        crop_to_vertical(input_path, cropped_path, os.path.join(outputs_dir, "face_detection"))
                                         
                                         # Update clip info
                                         clip['cropped_filename'] = cropped_filename
@@ -142,7 +187,7 @@ if Vid:
                                         print(f"✗ Face cropping failed for {clip['filename']}: {e}")
                         
                         # Create summary
-                        create_clips_summary(processed_clips, outputs_dir)
+                        create_clips_summary(processed_clips, os.path.join(outputs_dir, "clips"))
                         
                         print(f"\n🎉 Successfully created {len([c for c in processed_clips if c.get('status') == 'success'])} individual clips!")
                         print(f"📁 Files saved in: {outputs_dir}")
@@ -151,17 +196,17 @@ if Vid:
                 else:
                     print("Error in getting highlights - falling back to single highlight")
                     # Fallback to original single highlight method
-                    start, stop = GetHighlight(TransText)
+                    start, stop = GetHighlight(transcription_result, os.path.join(outputs_dir, "gpt_interactions"))
                     if start != 0 and stop != 0:
                         print(f"Fallback - Start: {start} , End: {stop}")
                         
-                        Output = os.path.join(outputs_dir, "Out.mp4")
+                        Output = os.path.join(outputs_dir, "clips", "Out.mp4")
                         crop_video(Vid, Output, start, stop)
                         
                         if process_face_crop:
-                            croped = os.path.join(outputs_dir, "croped.mp4")
-                            crop_to_vertical(Output, croped, outputs_dir)
-                            combine_videos(Output, croped, os.path.join(outputs_dir, "Final.mp4"))
+                            croped = os.path.join(outputs_dir, "face_detection", "croped.mp4")
+                            crop_to_vertical(Output, croped, os.path.join(outputs_dir, "face_detection"))
+                            combine_videos(Output, croped, os.path.join(outputs_dir, "clips", "Final.mp4"))
                         
                         print("Fallback single segment video created!")
                     else:

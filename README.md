@@ -2,7 +2,28 @@
 
 AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. The tool supports both YouTube URLs and local video files (with relative/absolute path support).
 
-## New Features (v0.3)
+## 🆕 Latest Features (v0.5) - Organized Output Structure
+
+- **📁 Timestamped Run Directories**: Each run creates a timestamped directory for complete organization
+- **🗂️ Categorized Subdirectories**: Separate folders for audio, transcription, clips, GPT logs, and face detection
+- **🔍 Enhanced Debugging**: All intermediate files preserved in organized structure
+- **📊 Better File Management**: Easy cleanup and parallel runs without conflicts
+- **⏰ Chronological Organization**: Find any run by timestamp for easy tracking
+
+## Enhanced Features (v0.4) - Enhanced Precision
+
+- **🎯 Word-Level Timestamps**: Precise clip boundaries using word-by-word timing analysis
+- **🗣️ Speaker Diarization**: Automatic speaker identification and labeled transcripts
+- **🤖 Enhanced GPT Integration**: Clean speaker-labeled transcripts sent to GPT (no timestamps)
+- **🔍 Smart Timestamp Refinement**: Automatically matches GPT clip suggestions to exact word positions
+- **📊 Comprehensive Debugging**: Save all GPT inputs/outputs and timing analysis for debugging
+- **✅ Confidence Scoring**: Quality metrics for each timestamp refinement
+- **🔄 Backward Compatibility**: All existing workflows continue to work unchanged
+
+See [OUTPUT_STRUCTURE.md](OUTPUT_STRUCTURE.md) for details on the new organized directory structure.
+See [ENHANCED_FEATURES.md](ENHANCED_FEATURES.md) for detailed documentation of the precision features.
+
+## Features (v0.3)
 
 - **Individual Clip Generation**: Creates separate video files for each engaging segment
 - **Descriptive Titles**: AI generates catchy titles for each clip suitable for social media
@@ -11,12 +32,12 @@ AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTu
 - **Duration Validation**: Each clip limited to under 60 seconds for optimal engagement
 - **Smart File Naming**: Clips saved with descriptive filenames based on AI-generated titles
 - **Clips Summary**: Automatic generation of summary file listing all created clips
-- **Transcription Debugging**: Saves Whisper transcriptions to `outputs/transcription/` for GPT performance analysis
+- **Transcription Debugging**: Saves Whisper transcriptions in organized subdirectories for analysis
 - **Multiple Formats**: Transcriptions saved as text (for GPT), JSON (structured), and SRT (subtitles)
 - **Customizable Prompts**: GPT prompts stored in external `prompt.ninja` file for easy customization
 - **Optional Cropping**: Face detection and vertical cropping can be applied optionally
 
-This tool is currently in version 0.3 and might have some bugs.
+This tool is currently in version 0.5 and might have some bugs.
 
 If you wish to add shorts generation into your application, here is an api to create shorts from long form videos :- https://docs.vadoo.tv/docs/guide/create-ai-clips
 
@@ -30,16 +51,15 @@ If you wish to add shorts generation into your application, here is an api to cr
 
 [Demo Output Video](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator/blob/main/Final.mp4)
 
-## Features
-
-## Features
+## Core Features
 
 - **Video Input**: Supports both YouTube URLs and local video files (with relative/absolute path support).
 - **Video Download**: Given a YouTube URL, the tool downloads the video.
-- **Transcription**: Uses Whisper to transcribe the video.
+- **Enhanced Transcription**: Uses Whisper with word-level timestamps and speaker diarization.
 - **Individual Clip Generation**: Utilizes OpenAI's GPT-4 to identify engaging parts and create separate clips with titles.
 - **Smart Titling**: AI generates descriptive, catchy titles for each clip.
 - **Context Preservation**: Each clip maintains complete context and stands alone.
+- **Precision Timing**: Word-level timestamp matching for exact clip boundaries.
 - **Optional Face Detection**: Applies speaker detection and vertical cropping when requested.
 - **Clips Summary**: Generates summary files with details about all created clips.
 
@@ -88,6 +108,7 @@ For OpenAI:
 
 ```bash
 OPENAI_API=your_openai_api_key_here
+HF_TOKEN=your_huggingface_token_here
 ```
 
 For Azure OpenAI:
@@ -97,7 +118,10 @@ USE_AZURE_OPENAI=true
 AZURE_OPENAI_KEY=your_azure_openai_key_here
 AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com
 AZURE_OPENAI_DEPLOYMENT=your_deployment_name
+HF_TOKEN=your_huggingface_token_here
 ```
+
+**Note**: The `HF_TOKEN` is required for speaker diarization functionality. You can get a token from [Hugging Face Settings](https://huggingface.co/settings/tokens). You also need to accept the model license at [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1).
 
 ## Usage
 

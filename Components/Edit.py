@@ -4,10 +4,13 @@ import subprocess
 import os
 import re
 
-def extractAudio(video_path, outputs_dir="outputs"):
+def extractAudio(video_path, audio_output_dir="outputs"):
     try:
+        # Ensure the output directory exists
+        os.makedirs(audio_output_dir, exist_ok=True)
+        
         video_clip = VideoFileClip(video_path)
-        audio_path = os.path.join(outputs_dir, "audio.wav")
+        audio_path = os.path.join(audio_output_dir, "audio.wav")
         video_clip.audio.write_audiofile(audio_path)
         video_clip.close()
         print(f"Extracted audio to: {audio_path}")
@@ -18,9 +21,30 @@ def extractAudio(video_path, outputs_dir="outputs"):
 
 
 def crop_video(input_file, output_file, start_time, end_time):
+    """
+    Crop video with precise timestamp handling
+    
+    Args:
+        input_file: Path to input video
+        output_file: Path to output video  
+        start_time: Start time in seconds (float for precision)
+        end_time: End time in seconds (float for precision)
+    """
     with VideoFileClip(input_file) as video:
+        # Use precise floating-point timestamps
+        expected_duration = end_time - start_time
+        print(f"   Cropping: {start_time:.3f}s to {end_time:.3f}s (expected duration: {expected_duration:.3f}s)")
+        
         cropped_video = video.subclip(start_time, end_time)
-        cropped_video.write_videofile(output_file, codec='libx264')
+        
+        # Write with high quality settings to preserve timing precision
+        cropped_video.write_videofile(
+            output_file, 
+            codec='libx264',
+            audio_codec='aac',
+            temp_audiofile='temp-audio.m4a',
+            remove_temp=True
+        )
 
 
 def sanitize_filename(title):
@@ -33,14 +57,14 @@ def sanitize_filename(title):
     return safe_title
 
 
-def process_individual_clips(input_file, segments, outputs_dir):
+def process_individual_clips(input_file, segments, clips_output_dir):
     """
     Process each segment as a separate video file with descriptive names
     
     Args:
         input_file: Path to input video file
         segments: List of segments with start/end times, titles, and metadata
-        outputs_dir: Directory to save output files
+        clips_output_dir: Directory to save output clip files
         
     Returns:
         List of dictionaries with clip info and file paths
@@ -48,6 +72,9 @@ def process_individual_clips(input_file, segments, outputs_dir):
     processed_clips = []
     
     try:
+        # Ensure the clips output directory exists
+        os.makedirs(clips_output_dir, exist_ok=True)
+        
         print(f"Processing {len(segments)} individual clips...")
         
         for i, segment in enumerate(segments):
@@ -67,7 +94,7 @@ def process_individual_clips(input_file, segments, outputs_dir):
             # Create safe filename
             safe_title = sanitize_filename(title)
             clip_filename = f"clip_{i+1:02d}_{safe_title}.mp4"
-            clip_output_path = os.path.join(outputs_dir, clip_filename)
+            clip_output_path = os.path.join(clips_output_dir, clip_filename)
             
             # Extract the clip
             try:
@@ -105,9 +132,12 @@ def process_individual_clips(input_file, segments, outputs_dir):
     return processed_clips
 
 
-def create_clips_summary(processed_clips, outputs_dir):
+def create_clips_summary(processed_clips, clips_output_dir):
     """Create a summary file listing all generated clips"""
-    summary_path = os.path.join(outputs_dir, "clips_summary.txt")
+    # Ensure the output directory exists
+    os.makedirs(clips_output_dir, exist_ok=True)
+    
+    summary_path = os.path.join(clips_output_dir, "clips_summary.txt")
     
     try:
         with open(summary_path, 'w', encoding='utf-8') as f:
