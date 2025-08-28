@@ -72,7 +72,7 @@ def sanitize_filename(title):
     return safe_title
 
 
-def process_individual_clips_with_subtitles(input_file, segments, clips_output_dir, word_segments=None, subtitle_style=None):
+def process_individual_clips_with_subtitles(input_file, segments, clips_output_dir, word_segments=None, subtitle_style=None, subtitle_mode="sweep"):
     """
     Process each segment as a separate video file with karaoke subtitles
     
@@ -82,6 +82,7 @@ def process_individual_clips_with_subtitles(input_file, segments, clips_output_d
         clips_output_dir: Directory to save clips
         word_segments: List of word-level timing data from transcription
         subtitle_style: Optional dictionary for subtitle styling
+        subtitle_mode: "sweep" for traditional karaoke or "word" for individual word highlighting
     
     Returns:
         List of processed clip information
@@ -133,7 +134,8 @@ def process_individual_clips_with_subtitles(input_file, segments, clips_output_d
                             clip_words, 
                             final_clip_path, 
                             subtitle_style,
-                            max_words_per_line=4  # Limit to 4 words per line for mobile screens
+                            max_words_per_line=4,  # Limit to 4 words per line for mobile screens
+                            highlight_mode=subtitle_mode
                         )
                         
                         if subtitled_path:

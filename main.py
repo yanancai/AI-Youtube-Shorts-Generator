@@ -79,6 +79,8 @@ def get_video_file():
     parser.add_argument('--single-segment', action='store_true', help='Use single segment mode (legacy behavior)')
     parser.add_argument('--process-face-crop', action='store_true', help='Apply face detection and vertical cropping to clips')
     parser.add_argument('--add-subtitles', action='store_true', help='Add word-by-word karaoke subtitles to clips')
+    parser.add_argument('--subtitle-mode', choices=['sweep', 'word'], default='word',
+                       help='Subtitle highlight mode: "sweep" for traditional karaoke sweep, "word" for individual word highlighting (default: word)')
     parser.add_argument('--video-title', type=str, help='Title of the video for context in clip selection')
     
     args = parser.parse_args()
@@ -91,15 +93,15 @@ def get_video_file():
             
         if is_url(args.input):
             print(f"Detected YouTube URL: {args.input}")
-            return download_youtube_video(args.input), args.single_segment, args.process_face_crop, args.add_subtitles, video_title
+            return download_youtube_video(args.input), args.single_segment, args.process_face_crop, args.add_subtitles, args.subtitle_mode, video_title
         else:
             # Treat as local file path
             video_path = os.path.abspath(args.input)
             if not os.path.exists(video_path):
                 print(f"Error: Video file '{video_path}' not found.")
-                return None, args.single_segment, args.process_face_crop, args.add_subtitles, video_title
+                return None, args.single_segment, args.process_face_crop, args.add_subtitles, args.subtitle_mode, video_title
             print(f"Using local video file: {video_path}")
-            return video_path, args.single_segment, args.process_face_crop, args.add_subtitles, video_title
+            return video_path, args.single_segment, args.process_face_crop, args.add_subtitles, args.subtitle_mode, video_title
     else:
         # Interactive mode - ask user for input
         user_input = input("Enter YouTube URL or local video file path: ").strip()
@@ -119,24 +121,30 @@ def get_video_file():
         subtitle_choice = input("Add word-by-word karaoke subtitles? (y/n, default: n): ").strip().lower()
         add_subtitles = subtitle_choice == 'y'
         
+        subtitle_mode = "word"  # Default mode for interactive
+        if add_subtitles:
+            mode_choice = input("Subtitle highlight mode - 'sweep' for traditional karaoke or 'word' for individual word highlighting (default: word): ").strip().lower()
+            if mode_choice == 'sweep':
+                subtitle_mode = "sweep"
+        
         if is_url(user_input):
             print(f"Detected YouTube URL: {user_input}")
-            return download_youtube_video(user_input), single_segment, process_face_crop, add_subtitles, video_title
+            return download_youtube_video(user_input), single_segment, process_face_crop, add_subtitles, subtitle_mode, video_title
         else:
             # Treat as local file path
             video_path = os.path.abspath(user_input)
             if not os.path.exists(video_path):
                 print(f"Error: Video file '{video_path}' not found.")
-                return None, single_segment, process_face_crop, add_subtitles, video_title
+                return None, single_segment, process_face_crop, add_subtitles, subtitle_mode, video_title
             print(f"Using local video file: {video_path}")
-            return video_path, single_segment, process_face_crop, add_subtitles, video_title
+            return video_path, single_segment, process_face_crop, add_subtitles, subtitle_mode, video_title
 
 signal.signal(signal.SIGPIPE, signal_handler)
 
 def main():
     """Main execution function with error handling"""
     try:
-        Vid, single_segment_mode, process_face_crop, add_subtitles, video_title = get_video_file()
+        Vid, single_segment_mode, process_face_crop, add_subtitles, subtitle_mode, video_title = get_video_file()
         if Vid:
             # Create organized run directory with timestamp
             outputs_dir = create_run_directory()
@@ -214,7 +222,8 @@ def main():
                                     Vid, 
                                     refined_segments, 
                                     os.path.join(outputs_dir, "clips"),
-                                    word_segments=transcription_result.get('word_segments', [])
+                                    word_segments=transcription_result.get('word_segments', []),
+                                    subtitle_mode=subtitle_mode
                                 )
                             else:
                                 processed_clips = process_individual_clips(Vid, refined_segments, os.path.join(outputs_dir, "clips"))

@@ -4,7 +4,7 @@ from pysubs2 import SSAEvent, SSAStyle
 import ffmpeg
 from moviepy.editor import VideoFileClip
 
-def create_karaoke_subtitles(word_segments, output_path, style_config=None, max_words_per_line=4):
+def create_karaoke_subtitles(word_segments, output_path, style_config=None, max_words_per_line=4, highlight_mode="sweep"):
     """
     Create ASS subtitle file with karaoke effects for word-by-word highlighting
     
@@ -13,6 +13,7 @@ def create_karaoke_subtitles(word_segments, output_path, style_config=None, max_
         output_path: Path to save the .ass subtitle file
         style_config: Optional dictionary with style configuration
         max_words_per_line: Maximum number of words per subtitle line (default: 4)
+        highlight_mode: "sweep" for traditional karaoke or "word" for individual word highlighting
     
     Returns:
         Path to created subtitle file
@@ -55,6 +56,93 @@ def create_karaoke_subtitles(word_segments, output_path, style_config=None, max_
         # Add the style to the subtitle file
         subs.styles["Karaoke"] = karaoke_style
         
+        if highlight_mode == "word":
+            # Create individual subtitle events for each word with precise timing
+            return create_word_by_word_subtitles(subs, word_segments, output_path)
+        else:
+            # Traditional sweep karaoke mode
+            return create_sweep_karaoke_subtitles(subs, word_segments, output_path, max_words_per_line)
+    
+    except Exception as e:
+        print(f"Error creating karaoke subtitles: {e}")
+        return None
+
+def create_word_by_word_subtitles(subs, word_segments, output_path):
+    """
+    Create subtitles where each word is highlighted individually
+    """
+    try:
+        # Group words into chunks for better readability
+        chunks = []
+        current_chunk = []
+        
+        for i, word_data in enumerate(word_segments):
+            word = word_data['word'].strip()
+            current_chunk.append(word_data)
+            
+            # Check if we should end this chunk (same logic as before)
+            should_end_chunk = (
+                len(current_chunk) >= 4 or  # Max words reached
+                word.endswith(('.', '!', '?', ',')) or       # Natural break points
+                (i < len(word_segments) - 1 and word_segments[i + 1]['start'] - word_data['end'] > 0.8) or  # Pause
+                i == len(word_segments) - 1  # Last word
+            )
+            
+            if should_end_chunk:
+                chunks.append(current_chunk)
+                current_chunk = []
+        
+        # Create subtitle events for each chunk
+        for chunk in chunks:
+            chunk_start = chunk[0]['start']
+            chunk_end = chunk[-1]['end']
+            
+            # Create the full text for this chunk
+            full_text = ' '.join([w['word'].strip() for w in chunk])
+            
+            # Create individual events for each word in the chunk
+            for word_idx, word_data in enumerate(chunk):
+                word = word_data['word'].strip()
+                word_start = word_data['start']
+                word_end = word_data['end']
+                
+                # Build text with highlighting for current word
+                highlighted_text = ""
+                for i, w_data in enumerate(chunk):
+                    w = w_data['word'].strip()
+                    if i == word_idx:
+                        # Highlight current word with different color
+                        highlighted_text += f"{{\\c&H00FFFF&}}{w}{{\\c&HFFFFFF&}} "
+                    else:
+                        # Normal color for other words
+                        highlighted_text += f"{w} "
+                
+                highlighted_text = highlighted_text.rstrip()
+                
+                # Create subtitle event for this word
+                event = SSAEvent(
+                    start=int(word_start * 1000),
+                    end=int(word_end * 1000),
+                    text=highlighted_text,
+                    style="Karaoke"
+                )
+                subs.append(event)
+        
+        # Save the subtitle file
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        subs.save(output_path)
+        print(f"✓ Word-by-word karaoke subtitles saved: {output_path}")
+        return output_path
+        
+    except Exception as e:
+        print(f"Error creating word-by-word subtitles: {e}")
+        return None
+
+def create_sweep_karaoke_subtitles(subs, word_segments, output_path, max_words_per_line):
+    """
+    Create traditional sweep karaoke subtitles (original implementation)
+    """
+    try:
         # Group words into short chunks (3-5 words) for better readability on mobile
         current_chunk = []
         chunk_start = None
@@ -177,7 +265,7 @@ def add_subtitles_to_video(video_path, subtitle_path, output_path, burn_subtitle
         return None
 
 
-def create_subtitled_clip(video_path, word_segments, output_path, style_config=None, max_words_per_line=4):
+def create_subtitled_clip(video_path, word_segments, output_path, style_config=None, max_words_per_line=4, highlight_mode="sweep"):
     """
     Complete workflow: Create karaoke subtitles and add them to video
     
@@ -187,6 +275,7 @@ def create_subtitled_clip(video_path, word_segments, output_path, style_config=N
         output_path: Final output video path
         style_config: Optional subtitle styling configuration
         max_words_per_line: Maximum number of words per subtitle line (default: 4)
+        highlight_mode: "sweep" for traditional karaoke or "word" for individual word highlighting
     
     Returns:
         Path to subtitled video or None if failed
@@ -195,8 +284,8 @@ def create_subtitled_clip(video_path, word_segments, output_path, style_config=N
         # Generate subtitle file path
         subtitle_path = output_path.replace('.mp4', '_karaoke.ass')
         
-        # Create karaoke subtitles with word limit
-        subtitle_file = create_karaoke_subtitles(word_segments, subtitle_path, style_config, max_words_per_line)
+        # Create karaoke subtitles with word limit and highlight mode
+        subtitle_file = create_karaoke_subtitles(word_segments, subtitle_path, style_config, max_words_per_line, highlight_mode)
         if not subtitle_file:
             return None
         
