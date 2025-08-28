@@ -122,13 +122,26 @@ def perform_speaker_diarization(audio_path, outputs_dir):
             print("You can get a token from: https://huggingface.co/settings/tokens")
             return []
         
-        # Initialize the pipeline with the token
-        # Note: You need to accept the pyannote model license at https://huggingface.co/pyannote/speaker-diarization-3.1
-        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=True)
-        pipeline.to(torch.device("cuda"))
-        
-        # Perform diarization
-        diarization = pipeline(audio_path)
+        # Suppress tqdm warnings during model loading and inference
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            
+            # Initialize the pipeline with the token
+            # Note: You need to accept the pyannote model license at https://huggingface.co/pyannote/speaker-diarization-3.1
+            pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=True)
+            pipeline.to(torch.device("cuda"))
+            
+            # Perform diarization with error handling for tqdm issues
+            try:
+                diarization = pipeline(audio_path)
+            except (AttributeError, KeyError) as e:
+                if 'last_print_t' in str(e) or 'tqdm' in str(e):
+                    # This is a tqdm cleanup error, ignore it and continue
+                    print("Warning: Progress bar cleanup error (ignored)")
+                    diarization = pipeline(audio_path)
+                else:
+                    raise e
         
         # Convert to our format
         speaker_segments = []

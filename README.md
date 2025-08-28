@@ -20,9 +20,6 @@ AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTu
 - **✅ Confidence Scoring**: Quality metrics for each timestamp refinement
 - **🔄 Backward Compatibility**: All existing workflows continue to work unchanged
 
-See [OUTPUT_STRUCTURE.md](OUTPUT_STRUCTURE.md) for details on the new organized directory structure.
-See [ENHANCED_FEATURES.md](ENHANCED_FEATURES.md) for detailed documentation of the precision features.
-
 ## Features (v0.3)
 
 - **Individual Clip Generation**: Creates separate video files for each engaging segment
@@ -36,6 +33,7 @@ See [ENHANCED_FEATURES.md](ENHANCED_FEATURES.md) for detailed documentation of t
 - **Multiple Formats**: Transcriptions saved as text (for GPT), JSON (structured), and SRT (subtitles)
 - **Customizable Prompts**: GPT prompts stored in external `prompt.ninja` file for easy customization
 - **Optional Cropping**: Face detection and vertical cropping can be applied optionally
+- **🆕 Word-by-Word Subtitles**: Karaoke-style highlighting subtitles that sync with speech
 
 This tool is currently in version 0.5 and might have some bugs.
 
@@ -158,7 +156,19 @@ HF_TOKEN=your_huggingface_token_here
    **Option 5: With Face Detection and Vertical Cropping**
 
    ```bash
-   python main.py "path/to/video.mp4" --process-face-crop
+   python main.py "path/to/your/video.mp4" --process-face-crop
+   ```
+
+   **Option 6: With Word-by-Word Karaoke Subtitles**
+
+   ```bash
+   python main.py "path/to/your/video.mp4" --add-subtitles
+   ```
+
+   **Option 7: All Features Combined**
+
+   ```bash
+   python main.py "path/to/your/video.mp4" --add-subtitles --process-face-crop --video-title="Your Video Title"
    ```
 
    The tool automatically detects whether your input is a YouTube URL or a local file path. For local files, both relative and absolute paths are supported and will be converted to absolute paths automatically.
@@ -189,7 +199,9 @@ HF_TOKEN=your_huggingface_token_here
 ## Command Line Options
 
 - `--single-segment`: Use the legacy single-segment mode instead of multi-clip
-- `--apply-cropping`: Apply face detection and vertical cropping to the generated clips
+- `--process-face-crop`: Apply face detection and vertical cropping to the generated clips
+- `--add-subtitles`: Add word-by-word karaoke highlighting subtitles to clips
+- `--video-title "Title"`: Specify video title for better context in clip selection
 
 ## Multi-Clip Mode vs Single-Segment Mode
 

@@ -3,6 +3,7 @@ from moviepy.editor import VideoFileClip
 import subprocess
 import os
 import re
+from .Subtitles import create_subtitled_clip, extract_word_segments_for_clip
 
 def extractAudio(video_path, audio_output_dir="outputs", temporary=False):
     try:
@@ -69,6 +70,125 @@ def sanitize_filename(title):
     # Limit length to avoid filesystem issues
     safe_title = safe_title[:50]
     return safe_title
+
+
+def process_individual_clips_with_subtitles(input_file, segments, clips_output_dir, word_segments=None, subtitle_style=None):
+    """
+    Process each segment as a separate video file with karaoke subtitles
+    
+    Args:
+        input_file: Path to input video file
+        segments: List of segment dictionaries with start, end, title, content, priority
+        clips_output_dir: Directory to save clips
+        word_segments: List of word-level timing data from transcription
+        subtitle_style: Optional dictionary for subtitle styling
+    
+    Returns:
+        List of processed clip information
+    """
+    print(f"\nProcessing {len(segments)} individual clips with subtitles...")
+    processed_clips = []
+    
+    # Ensure output directory exists
+    os.makedirs(clips_output_dir, exist_ok=True)
+    
+    try:
+        for i, segment in enumerate(segments):
+            title = segment.get('title', f'Clip {i+1}')
+            start_time = segment['start']
+            end_time = segment['end']
+            content = segment.get('content', 'No description available')
+            priority = segment.get('priority', 'Unknown')
+            duration = segment.get('duration', end_time - start_time)
+            
+            print(f"\nProcessing clip {i+1}/{len(segments)} with subtitles:")
+            print(f"  Title: {title}")
+            print(f"  Time: {start_time}s - {end_time}s ({duration:.1f}s)")
+            print(f"  Priority: {priority}")
+            print(f"  Description: {content}")
+            
+            # Create safe filename
+            safe_title = sanitize_filename(title)
+            clip_filename = f"clip_{i+1:02d}_{safe_title}.mp4"
+            clip_output_path = os.path.join(clips_output_dir, clip_filename)
+            
+            # Create temporary clip without subtitles first
+            temp_clip_path = clip_output_path.replace('.mp4', '_temp.mp4')
+            
+            try:
+                # Extract the base clip
+                crop_video(input_file, temp_clip_path, start_time, end_time)
+                
+                # Add subtitles if word segments are available
+                final_clip_path = clip_output_path
+                if word_segments:
+                    print(f"  Adding karaoke subtitles...")
+                    # Extract word segments for this specific clip
+                    clip_words = extract_word_segments_for_clip(word_segments, start_time, end_time)
+                    
+                    if clip_words:
+                        # Create subtitled version with word limit for better mobile readability
+                        subtitled_path = create_subtitled_clip(
+                            temp_clip_path, 
+                            clip_words, 
+                            final_clip_path, 
+                            subtitle_style,
+                            max_words_per_line=4  # Limit to 4 words per line for mobile screens
+                        )
+                        
+                        if subtitled_path:
+                            print(f"  ✓ Added karaoke subtitles")
+                        else:
+                            print(f"  ⚠ Subtitle creation failed, using clip without subtitles")
+                            # Fall back to clip without subtitles
+                            os.rename(temp_clip_path, final_clip_path)
+                    else:
+                        print(f"  ⚠ No words found for this clip timeframe")
+                        os.rename(temp_clip_path, final_clip_path)
+                else:
+                    print(f"  ⚠ No word segments provided, creating clip without subtitles")
+                    os.rename(temp_clip_path, final_clip_path)
+                
+                # Clean up temporary file if it still exists
+                if os.path.exists(temp_clip_path):
+                    os.remove(temp_clip_path)
+                
+                clip_info = {
+                    'index': i + 1,
+                    'title': title,
+                    'filename': clip_filename,
+                    'filepath': final_clip_path,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'duration': duration,
+                    'content': content,
+                    'priority': priority,
+                    'has_subtitles': word_segments is not None and len(clip_words) > 0 if word_segments else False,
+                    'status': 'success'
+                }
+                
+                processed_clips.append(clip_info)
+                print(f"  ✓ Saved: {clip_filename}")
+                
+            except Exception as e:
+                print(f"  ✗ Error processing clip: {e}")
+                
+                # Clean up temporary file if it exists
+                if os.path.exists(temp_clip_path):
+                    os.remove(temp_clip_path)
+                
+                clip_info = {
+                    'index': i + 1,
+                    'title': title,
+                    'error': str(e),
+                    'status': 'failed'
+                }
+                processed_clips.append(clip_info)
+                
+    except Exception as e:
+        print(f"Error in process_individual_clips_with_subtitles: {e}")
+        
+    return processed_clips
 
 
 def process_individual_clips(input_file, segments, clips_output_dir):

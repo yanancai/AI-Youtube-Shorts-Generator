@@ -70,6 +70,10 @@ def detect_faces_and_speakers(input_video_path, output_video_path, outputs_dir="
         is_speaking_audio = voice_activity_detection(audio_frame, sample_rate)
         MaxDif = 0
         Add = []
+        
+        # Initialize default face coordinates (center of frame)
+        x, y, x1, y1 = w//4, h//4, 3*w//4, 3*h//4
+        
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
             if confidence > 0.3:  # Confidence threshold
@@ -85,7 +89,7 @@ def detect_faces_and_speakers(input_video_path, output_video_path, outputs_dir="
                 lip_distance = abs((y + 2 * face_height // 3) - (y1))
                 Add.append([[x, y, x1, y1], lip_distance])
 
-                MaxDif == max(lip_distance, MaxDif)
+                MaxDif = max(lip_distance, MaxDif)
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
             if confidence > 0.3:  # Confidence threshold
